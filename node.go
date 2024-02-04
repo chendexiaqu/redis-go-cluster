@@ -16,6 +16,7 @@
 package redis
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"sync"
@@ -74,7 +75,15 @@ func (node *redisNode) getConn() (*redisConn, error) {
 	if node.conns.Len() <= 0 {
 		node.mutex.Unlock()
 
-		c, err := net.DialTimeout("tcp", node.address, node.connTimeout)
+		// c, err := net.DialTimeout("tcp", node.address, node.connTimeout)
+		dialer := &net.Dialer{Timeout: node.connTimeout}
+		tlsConfig := &tls.Config{
+			// 这里配置TLS属性，例如:
+			InsecureSkipVerify: true, // 仅用于测试，不推荐在生产环境中使用
+			// ServerName:         "example.com", // 如果需要验证服务端证书，设置为服务器的域名
+		}
+
+		c, err := tls.DialWithDialer(dialer, "tcp", node.address, tlsConfig)
 		if err != nil {
 			return nil, err
 		}
